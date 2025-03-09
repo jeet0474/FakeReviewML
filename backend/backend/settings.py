@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-wd(tnom^7m5$+4i$$xnes9w@s20+$(z!@uwnm3w*(^m87d(3g&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['fakereviewml.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['fakereviewml-backend.onrender.com', 'localhost', '127.0.0.1']
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 
@@ -60,6 +60,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5000",  # Flask frontend
     "http://localhost:5000",
+    "https://fakereviewml-frontend.onrender.com",
 ]
 CORS_ALLOW_METHODS = [
     "GET",

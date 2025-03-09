@@ -169,7 +169,7 @@
             document.getElementById("summary").innerHTML = "";
             document.getElementById("reviews").innerHTML = "";
 
-            const backendEndpoint = "http://127.0.0.1:5000/fetch_reviews";
+            const backendEndpoint = "https://fakereviewml-frontend.onrender.com/fetch_reviews";
 
             fetch(`${backendEndpoint}?url=${encodeURIComponent(flipkartURL)}`)
                 .then(response => response.json())
