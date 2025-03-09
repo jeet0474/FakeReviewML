@@ -9,6 +9,9 @@ from time import sleep
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from django.http import JsonResponse
 
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
 # Load ML models
 logistic_model = joblib.load("./Models/logistic_regression_model.joblib")
 random_forest_model = joblib.load("./Models/random_forest_model.joblib")
