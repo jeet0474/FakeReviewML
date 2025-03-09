@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Authenticity Checker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js Library -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='verified.ico') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            text-align: center;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .disclaimer {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+        .input-box {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 15px;
+            margin-left: 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin-top: 20px;
+            background: #eef1f4;
+            border-radius: 10px;
+        }
+        .box {
+            flex: 1;
+            padding: 15px;
+            margin: 5px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        }
+        .sentiment-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            width: 100%;
+        }
+        .sentiment-content {
+            display: flex;
+            align-items: center;
+            padding-left: 120px;
+            width: 100%;
+        }
+        .chart-container {
+            width: 40%;
+            max-width: 150px;
+            padding-right: 20px;
+        }
+        .sentiment-legend {
+            text-align: left;
+        }
+        .sentiment-legend p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .reviews {
+            margin-top: 20px;
+        }
+        .review-box {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .rating {
+            font-weight: bold;
+            color: #333;
+        }
+        .review-text {
+            margin: 10px 0;
+            color: #555;
+        }
+        .ai-likelihood {
+            font-size: 12px;
+            color: #666;
+            text-align: left;
+        }
+        /* Loader */
+        .loader {
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #007bff, #ffffff);
+            background-size: 200% 100%;
+            animation: loading 1.5s linear infinite;
+            display: none;
+        }
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Review Authenticity Checker</h1>
+        <p class="disclaimer">This site currently handles only Flipkart reviews. More platforms coming soon!</p>
+
+        <div class="input-box">
+            <input type="text" id="review-url" placeholder="Enter valid URL" onkeypress="handleKeyPress(event)">
+            <button onclick="fetchReviews()">Check</button>
+        </div>
+
+        <div class="loader" id="loader"></div>
+
+        <div id="summary"></div>
+        <div id="reviews"></div>
+    </div>
+
+    <script>
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                fetchReviews();
+            }
+        }
+
+        function fetchReviews() {
+            let flipkartURL = document.getElementById("review-url").value.trim();
+
+            if (!flipkartURL) {
+                alert("Please enter a Flipkart review URL!");
+                return;
+            }
+
+            // Show loader
+            document.getElementById("loader").style.display = "block";
+            document.getElementById("summary").innerHTML = "";
+            document.getElementById("reviews").innerHTML = "";
+
+            const backendEndpoint = "http://127.0.0.1:5000/fetch_reviews";
+
+            fetch(`${backendEndpoint}?url=${encodeURIComponent(flipkartURL)}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("loader").style.display = "none"; // Hide loader
+
+                    let summary = document.getElementById("summary");
+                    let reviewsContainer = document.getElementById("reviews");
+
+                    if (data.error) {
+                        reviewsContainer.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+                        return;
+                    }
+
+                    summary.innerHTML = `
+                        <div class="summary-row">
+                            <div class="box">
+                                <h3>Ratings</h3>
+                                <p>⭐⭐⭐⭐⭐ - ${data.rating_distribution["5_star"]}</p>
+                                <p>⭐⭐⭐⭐ - ${data.rating_distribution["4_star"]}</p>
+                                <p>⭐⭐⭐ - ${data.rating_distribution["3_star"]}</p>
+                                <p>⭐⭐ - ${data.rating_distribution["2_star"]}</p>
+                                <p>⭐ - ${data.rating_distribution["1_star"]}</p>
+                            </div>
+                            <div class="box sentiment-box">
+                                <h3>Sentiment</h3>
+                                <div class="sentiment-content">
+                                    <div class="chart-container">
+                                        <canvas id="sentimentChart"></canvas>
+                                    </div>
+                                    <div class="sentiment-legend">
+                                        <p style="color: #28a745;">🟢 Positive: ${data.sentiment_distribution.positive}%</p>
+                                        <p style="color: #ffc107;">🟡 Neutral: ${data.sentiment_distribution.neutral}%</p>
+                                        <p style="color: #dc3545;">🔴 Negative: ${data.sentiment_distribution.negative}%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    drawSentimentChart(
+                        data.sentiment_distribution.positive, 
+                        data.sentiment_distribution.neutral, 
+                        data.sentiment_distribution.negative
+                    );
+
+                    data.text.forEach(review => {
+                        let prediction = review.prediction.toFixed(2);
+                        let bgColor = getBackgroundColor(prediction);
+
+                        let reviewBox = document.createElement("div");
+                        reviewBox.classList.add("review-box");
+                        reviewBox.style.backgroundColor = bgColor;
+
+                        reviewBox.innerHTML = `
+                            <p class="rating">Rating: ${review.rating} ⭐</p>
+                            <p class="review-text">${review.text}</p>
+                            <p class="ai-likelihood">Computer-Generated Possibility: ${prediction}%</p>
+                        `;
+
+                        reviewsContainer.appendChild(reviewBox);
+                    });
+                })
+                .catch(error => {
+                    document.getElementById("loader").style.display = "none";
+                    document.getElementById("reviews").innerHTML = `<p class="error">Error: ${error.message}</p>`;
+                });
+        }
+
+        function getBackgroundColor(prediction) {
+            return prediction >= 80 ? "#f8d7da" : prediction >= 50 ? "#fff3cd" : "#d4edda";
+        }
+
+        function drawSentimentChart(positive, neutral, negative) {
+            new Chart(document.getElementById("sentimentChart").getContext("2d"), {
+                type: "pie",
+                data: {
+                    datasets: [{ data: [positive, neutral, negative], backgroundColor: ["#28a745", "#ffc107", "#dc3545"] }]
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
