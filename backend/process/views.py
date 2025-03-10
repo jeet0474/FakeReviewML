@@ -37,6 +37,7 @@ sorting_orders = [
 # Function to get rating distribution
 def get_rating_distribution(url):
     headers = {'User-Agent': 'Mozilla/5.0'}
+    sleep(1.5)
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
         return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
