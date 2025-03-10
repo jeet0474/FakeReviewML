@@ -38,23 +38,78 @@ sorting_orders = [
 ]
 
 # Function to get rating distribution
+# def get_rating_distribution(url):
+#     headers = {'User-Agent': 'Mozilla/5.0'}
+#     sleep(1.5)
+#     response = requests.get(url, headers=headers)
+#     if response.status_code != 200:
+#         return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
+
+#     soup = BeautifulSoup(response.content, 'html.parser')
+#     ratings = soup.find_all('div', class_='x2IWCo')
+#     counts = soup.find_all('div', class_='BArk-j')
+
+#     if len(ratings) < 5 or len(counts) < 5:
+#         return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
+
+#     return {
+#         f"{5-i}_star": int(counts[i].get_text(strip=True).replace(',', '')) for i in range(5)
+#     }
+
 def get_rating_distribution(url):
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    sleep(1.5)
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
+    ]
 
-    soup = BeautifulSoup(response.content, 'html.parser')
-    ratings = soup.find_all('div', class_='x2IWCo')
-    counts = soup.find_all('div', class_='BArk-j')
-
-    if len(ratings) < 5 or len(counts) < 5:
-        return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
-
-    return {
-        f"{5-i}_star": int(counts[i].get_text(strip=True).replace(',', '')) for i in range(5)
+    headers = {
+        "User-Agent": random.choice(user_agents)  # Randomly select a user-agent
     }
+
+    
+    # Ensure that the URL is valid
+    if not url:
+        print("❌ No URL provided.")
+        return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
+    
+    print(f"Scraping URL: {url}")
+    
+    try:
+        # Sleep added to mimic human-like behavior
+        sleep(1.5)
+        
+        # Request the page content
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            print(f"❌ Failed to retrieve the page, Status Code: {response.status_code}")
+            return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Extract the ratings and counts from the page
+        ratings = soup.find_all('div', class_='x2IWCo')
+        counts = soup.find_all('div', class_='BArk-j')
+        
+        # Check if ratings and counts are found, else return 0 ratings
+        if len(ratings) < 5 or len(counts) < 5:
+            print("❌ Ratings or counts not found or incomplete.")
+            return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
+        
+        # Create a dictionary to store ratings distribution
+        rating_distribution = {
+            f"{5-i}_star": int(counts[i].get_text(strip=True).replace(',', '')) for i in range(5)
+        }
+
+        # Debugging output to show what was scraped
+        print(f"Scraped Rating Distribution: {rating_distribution}")
+        
+        return rating_distribution
+    
+    except Exception as e:
+        print(f"Error during scraping: {e}")
+        return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
+
 
 # Function to scrape reviews
 # def get_flipkart_reviews(url):
@@ -343,7 +398,7 @@ def predict_fake_reviews_api(request):
             return JsonResponse({"error": "URL parameter is required"}, status=400)
 
         ratings_distribution = get_rating_distribution(url)
-        print(f"Ratings: {ratings_distribution}")
+        # print(f"Ratings: {ratings_distribution}")
         
         reviews = get_flipkart_reviews(url)
         # Remove "READ MORE" from all reviews
