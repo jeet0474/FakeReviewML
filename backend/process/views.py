@@ -54,6 +54,66 @@ def get_rating_distribution(url):
     }
 
 # Function to scrape reviews
+# def get_flipkart_reviews(url):
+#     if not url:
+#         return []
+
+#     # Convert product page URL to reviews URL (Flipkart-specific)
+#     if "/p/" in url:
+#         url = url.replace('/p/', '/product-reviews/')
+
+#     headers = {
+#         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+#     }
+
+#     all_reviews = []
+#     seen_reviews = set()
+
+#     page_number = 1
+#     max_pages = 5  # Limit scraping to 5 pages to avoid being blocked
+
+#     while page_number <= max_pages:
+#         page_url = f"{url}&page={page_number}"
+        
+#         try:
+#             response = requests.get(page_url, headers=headers, timeout=10)
+#             response.raise_for_status()  # Raise an error if request fails
+#         except requests.exceptions.RequestException as e:
+#             print(f"Error fetching reviews: {e}")
+#             break  # Stop if request fails
+
+#         soup = BeautifulSoup(response.text, 'html.parser')
+
+#         reviews = soup.find_all('div', class_='col EPCmJX Ma1fCG')  # Flipkart review container
+#         if not reviews:
+#             break  # Stop if no more reviews found
+
+#         for review in reviews:
+#             # Extract review content
+#             review_content = review.find('div', class_='ZmyHeo')
+#             review_text = review_content.get_text(strip=True) if review_content else ""
+
+#             # Extract rating
+#             rating_div = review.find('div', class_=re.compile(r'^XQDdHH.*Ga3i8K$'))
+#             rating = None
+#             if rating_div:
+#                 try:
+#                     rating = float(rating_div.get_text(strip=True))
+#                 except ValueError:
+#                     rating = None
+
+#             # Ensure unique reviews
+#             review_pair = (review_text, rating)
+#             if review_pair not in seen_reviews:
+#                 all_reviews.append({"text": review_text, "rating": rating})
+#                 seen_reviews.add(review_pair)
+
+#         page_number += 1
+#         time.sleep(random.uniform(1, 3))  # Random delay to prevent getting blocked
+
+#     return all_reviews 
+
+# Function to scrape reviews with sorting orders
 def get_flipkart_reviews(url):
     if not url:
         return []
@@ -68,50 +128,51 @@ def get_flipkart_reviews(url):
 
     all_reviews = []
     seen_reviews = set()
+    max_pages_per_order = 10  # Limit scraping to 5 pages per sorting order to avoid being blocked
 
-    page_number = 1
-    max_pages = 5  # Limit scraping to 5 pages to avoid being blocked
-
-    while page_number <= max_pages:
-        page_url = f"{url}&page={page_number}"
+    for sorting_order in sorting_orders:
+        page_number = 1
         
-        try:
-            response = requests.get(page_url, headers=headers, timeout=10)
-            response.raise_for_status()  # Raise an error if request fails
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching reviews: {e}")
-            break  # Stop if request fails
+        while page_number <= max_pages_per_order:
+            page_url = f"{url}{sorting_order}&page={page_number}"
+            
+            try:
+                response = requests.get(page_url, headers=headers, timeout=10)
+                response.raise_for_status()  # Raise an error if request fails
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching reviews: {e}")
+                break  # Stop if request fails
 
-        soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, 'html.parser')
+            reviews = soup.find_all('div', class_='col EPCmJX Ma1fCG')  # Flipkart review container
+            
+            if not reviews:
+                break  # Stop if no more reviews found
 
-        reviews = soup.find_all('div', class_='col EPCmJX Ma1fCG')  # Flipkart review container
-        if not reviews:
-            break  # Stop if no more reviews found
+            for review in reviews:
+                # Extract review content
+                review_content = review.find('div', class_='ZmyHeo')
+                review_text = review_content.get_text(strip=True) if review_content else ""
 
-        for review in reviews:
-            # Extract review content
-            review_content = review.find('div', class_='ZmyHeo')
-            review_text = review_content.get_text(strip=True) if review_content else ""
+                # Extract rating
+                rating_div = review.find('div', class_=re.compile(r'^XQDdHH.*Ga3i8K$'))
+                rating = None
+                if rating_div:
+                    try:
+                        rating = float(rating_div.get_text(strip=True))
+                    except ValueError:
+                        rating = None
 
-            # Extract rating
-            rating_div = review.find('div', class_=re.compile(r'^XQDdHH.*Ga3i8K$'))
-            rating = None
-            if rating_div:
-                try:
-                    rating = float(rating_div.get_text(strip=True))
-                except ValueError:
-                    rating = None
+                # Ensure unique reviews
+                review_pair = (review_text, rating)
+                if review_pair not in seen_reviews:
+                    all_reviews.append({"text": review_text, "rating": rating})
+                    seen_reviews.add(review_pair)
 
-            # Ensure unique reviews
-            review_pair = (review_text, rating)
-            if review_pair not in seen_reviews:
-                all_reviews.append({"text": review_text, "rating": rating})
-                seen_reviews.add(review_pair)
+            page_number += 1
+            time.sleep(random.uniform(1, 3))  # Random delay to prevent getting blocked
 
-        page_number += 1
-        time.sleep(random.uniform(1, 3))  # Random delay to prevent getting blocked
-
-    return all_reviews 
+    return all_reviews
 
 
 # Predict AI-generated reviews
