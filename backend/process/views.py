@@ -7,12 +7,15 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from time import sleep
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 import gc
 
 
 def health_check(request):
     return JsonResponse({"status": "ok"})
+
+def home(request):
+    return HttpResponse("Hello, world!")
 
 # Load ML models
 # logistic_model = joblib.load("./Models/logistic_regression_model.joblib")
