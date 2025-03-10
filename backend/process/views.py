@@ -137,7 +137,7 @@ def get_flipkart_reviews(url):
             page_url = f"{url}{sorting_order}&page={page_number}"
             
             try:
-                response = requests.get(page_url, headers=headers, timeout=10)
+                response = requests.get(page_url, headers=headers, timeout=100)
                 response.raise_for_status()  # Raise an error if request fails
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching reviews: {e}")
