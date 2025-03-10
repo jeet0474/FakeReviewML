@@ -8,20 +8,30 @@ from bs4 import BeautifulSoup
 from time import sleep
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from django.http import JsonResponse
+import gc
+
 
 def health_check(request):
     return JsonResponse({"status": "ok"})
 
 # Load ML models
-logistic_model = joblib.load("./Models/logistic_regression_model.joblib")
-random_forest_model = joblib.load("./Models/random_forest_model.joblib")
-svm_model = joblib.load("./Models/svm_model.joblib")
-stacking_model = joblib.load("./Models/xgb_stacking_model.joblib")
+# logistic_model = joblib.load("./Models/logistic_regression_model.joblib")
+# random_forest_model = joblib.load("./Models/random_forest_model.joblib")
+# svm_model = joblib.load("./Models/svm_model.joblib")
+# stacking_model = joblib.load("./Models/xgb_stacking_model.joblib")
+
+logistic_model_path = "./Models/logistic_regression_model.joblib"
+random_forest_model_path = "./Models/random_forest_model.joblib"
+svm_model_path = "./Models/svm_model.joblib"
+stacking_model_path = "./Models/xgb_stacking_model.joblib"
 
 # Flipkart product reviews sorting orders
 sorting_orders = [
-    "",  # Default order
-    "&aid=overall&certifiedBuyer=false&sortOrder=MOST_HELPFUL"
+    "",  # Default (unsorted)
+    "&aid=overall&certifiedBuyer=false&sortOrder=MOST_HELPFUL",
+    "&aid=overall&certifiedBuyer=false&sortOrder=MOST_RECENT",
+    "&aid=overall&certifiedBuyer=false&sortOrder=POSITIVE_FIRST",
+    "&aid=overall&certifiedBuyer=false&sortOrder=NEGATIVE_FIRST"
 ]
 
 # Function to get rating distribution
@@ -107,22 +117,49 @@ def get_flipkart_reviews(url):
 def predict_fake_reviews(reviews):
     print(f"Received Reviews: {len(reviews)}")
     df = pd.DataFrame(reviews)
+    
     if df.empty:
         print("❌ DataFrame is empty. Returning []")
         return []
 
-    try:
-        logistic_pred = logistic_model.predict_proba(df[['text', 'rating']])[:, 1]
-        rf_pred = random_forest_model.predict_proba(df[['text', 'rating']])[:, 1]
-        svm_pred = svm_model.predict_proba(df[['text', 'rating']])[:, 1]
+    # Initialize empty predictions
+    logistic_pred = None
+    rf_pred = None
+    svm_pred = None
 
+    try:
+        # Lazy load and predict with logistic regression model
+        logistic_model = joblib.load(logistic_model_path)
+        logistic_pred = logistic_model.predict_proba(df[['text', 'rating']])[:, 1]
+        del logistic_model  # Unload the logistic regression model
+        gc.collect()  # Explicitly call garbage collector
+        
+        # Lazy load and predict with random forest model
+        random_forest_model = joblib.load(random_forest_model_path)
+        rf_pred = random_forest_model.predict_proba(df[['text', 'rating']])[:, 1]
+        del random_forest_model  # Unload the random forest model
+        gc.collect()  # Explicitly call garbage collector
+        
+        # Lazy load and predict with SVM model
+        svm_model = joblib.load(svm_model_path)
+        svm_pred = svm_model.predict_proba(df[['text', 'rating']])[:, 1]
+        del svm_model  # Unload the SVM model
+        gc.collect()  # Explicitly call garbage collector
+        
+        # Stack predictions and apply stacking model
         X_stack = pd.DataFrame({'logistic_pred': logistic_pred, 'rf_pred': rf_pred, 'svm_pred': svm_pred})
+        
+        # Lazy load and predict with stacking model
+        stacking_model = joblib.load(stacking_model_path)
         df['prediction'] = stacking_model.predict_proba(X_stack)[:, 1] * 100
+        del stacking_model  # Unload the stacking model
+        gc.collect()  # Explicitly call garbage collector
 
         return df.to_dict(orient="records") 
     except Exception as e:
         print(f"Prediction Error: {e}")
         return []
+
 
 # Perform sentiment analysis
 # def analyze_sentiment(reviews, ratings_distribution):
