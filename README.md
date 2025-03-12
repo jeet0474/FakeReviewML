@@ -3,6 +3,10 @@ A project to extract reviews from supported website links and analyze them to de
 
 ---
 
+![Alt text](https://github.com/jeet0474/FakeReviewML/tree/main/recording.gif)
+
+---
+
 ## **How to Run the Project**  
 ### **First, clone this repository.**  
 
