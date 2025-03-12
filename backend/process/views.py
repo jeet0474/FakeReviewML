@@ -186,7 +186,7 @@ def get_flipkart_reviews(url):
 
     all_reviews = []
     seen_reviews = set()
-    max_pages_per_order = 10  # Limit scraping to 5 pages per sorting order to avoid being blocked
+    max_pages_per_order = 6  # Limit scraping to 5 pages per sorting order to avoid being blocked
 
     for sorting_order in sorting_orders:
         page_number = 1
