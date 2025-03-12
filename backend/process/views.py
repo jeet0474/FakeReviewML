@@ -18,15 +18,15 @@ def home(request):
     return HttpResponse("Hello, world!")
 
 # Load ML models
-# logistic_model = joblib.load("./Models/logistic_regression_model.joblib")
-# random_forest_model = joblib.load("./Models/random_forest_model.joblib")
-# svm_model = joblib.load("./Models/svm_model.joblib")
-# stacking_model = joblib.load("./Models/xgb_stacking_model.joblib")
+logistic_model = joblib.load("./Models/logistic_regression_model.joblib")
+random_forest_model = joblib.load("./Models/random_forest_model.joblib")
+svm_model = joblib.load("./Models/svm_model.joblib")
+stacking_model = joblib.load("./Models/xgb_stacking_model.joblib")
 
-logistic_model_path = "./Models/logistic_regression_model.joblib"
-random_forest_model_path = "./Models/random_forest_model.joblib"
-svm_model_path = "./Models/svm_model.joblib"
-stacking_model_path = "./Models/xgb_stacking_model.joblib"
+# logistic_model_path = "./Models/logistic_regression_model.joblib"
+# random_forest_model_path = "./Models/random_forest_model.joblib"
+# svm_model_path = "./Models/svm_model.joblib"
+# stacking_model_path = "./Models/xgb_stacking_model.joblib"
 
 # Flipkart product reviews sorting orders
 sorting_orders = [
@@ -38,24 +38,6 @@ sorting_orders = [
 ]
 
 # Function to get rating distribution
-# def get_rating_distribution(url):
-#     headers = {'User-Agent': 'Mozilla/5.0'}
-#     sleep(1.5)
-#     response = requests.get(url, headers=headers)
-#     if response.status_code != 200:
-#         return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
-
-#     soup = BeautifulSoup(response.content, 'html.parser')
-#     ratings = soup.find_all('div', class_='x2IWCo')
-#     counts = soup.find_all('div', class_='BArk-j')
-
-#     if len(ratings) < 5 or len(counts) < 5:
-#         return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
-
-#     return {
-#         f"{5-i}_star": int(counts[i].get_text(strip=True).replace(',', '')) for i in range(5)
-#     }
-
 def get_rating_distribution(url):
     user_agents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36",
@@ -109,67 +91,6 @@ def get_rating_distribution(url):
     except Exception as e:
         print(f"Error during scraping: {e}")
         return {"5_star": 0, "4_star": 0, "3_star": 0, "2_star": 0, "1_star": 0}
-
-
-# Function to scrape reviews
-# def get_flipkart_reviews(url):
-#     if not url:
-#         return []
-
-#     # Convert product page URL to reviews URL (Flipkart-specific)
-#     if "/p/" in url:
-#         url = url.replace('/p/', '/product-reviews/')
-
-#     headers = {
-#         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
-#     }
-
-#     all_reviews = []
-#     seen_reviews = set()
-
-#     page_number = 1
-#     max_pages = 5  # Limit scraping to 5 pages to avoid being blocked
-
-#     while page_number <= max_pages:
-#         page_url = f"{url}&page={page_number}"
-        
-#         try:
-#             response = requests.get(page_url, headers=headers, timeout=10)
-#             response.raise_for_status()  # Raise an error if request fails
-#         except requests.exceptions.RequestException as e:
-#             print(f"Error fetching reviews: {e}")
-#             break  # Stop if request fails
-
-#         soup = BeautifulSoup(response.text, 'html.parser')
-
-#         reviews = soup.find_all('div', class_='col EPCmJX Ma1fCG')  # Flipkart review container
-#         if not reviews:
-#             break  # Stop if no more reviews found
-
-#         for review in reviews:
-#             # Extract review content
-#             review_content = review.find('div', class_='ZmyHeo')
-#             review_text = review_content.get_text(strip=True) if review_content else ""
-
-#             # Extract rating
-#             rating_div = review.find('div', class_=re.compile(r'^XQDdHH.*Ga3i8K$'))
-#             rating = None
-#             if rating_div:
-#                 try:
-#                     rating = float(rating_div.get_text(strip=True))
-#                 except ValueError:
-#                     rating = None
-
-#             # Ensure unique reviews
-#             review_pair = (review_text, rating)
-#             if review_pair not in seen_reviews:
-#                 all_reviews.append({"text": review_text, "rating": rating})
-#                 seen_reviews.add(review_pair)
-
-#         page_number += 1
-#         time.sleep(random.uniform(1, 3))  # Random delay to prevent getting blocked
-
-#     return all_reviews 
 
 # Function to scrape reviews with sorting orders
 def get_flipkart_reviews(url):
@@ -248,32 +169,14 @@ def predict_fake_reviews(reviews):
     svm_pred = None
 
     try:
-        # Lazy load and predict with logistic regression model
-        logistic_model = joblib.load(logistic_model_path)
         logistic_pred = logistic_model.predict_proba(df[['text', 'rating']])[:, 1]
-        del logistic_model  # Unload the logistic regression model
-        gc.collect()  # Explicitly call garbage collector
-        
-        # Lazy load and predict with random forest model
-        random_forest_model = joblib.load(random_forest_model_path)
         rf_pred = random_forest_model.predict_proba(df[['text', 'rating']])[:, 1]
-        del random_forest_model  # Unload the random forest model
-        gc.collect()  # Explicitly call garbage collector
-        
-        # Lazy load and predict with SVM model
-        svm_model = joblib.load(svm_model_path)
         svm_pred = svm_model.predict_proba(df[['text', 'rating']])[:, 1]
-        del svm_model  # Unload the SVM model
-        gc.collect()  # Explicitly call garbage collector
         
         # Stack predictions and apply stacking model
         X_stack = pd.DataFrame({'logistic_pred': logistic_pred, 'rf_pred': rf_pred, 'svm_pred': svm_pred})
         
-        # Lazy load and predict with stacking model
-        stacking_model = joblib.load(stacking_model_path)
         df['prediction'] = stacking_model.predict_proba(X_stack)[:, 1] * 100
-        del stacking_model  # Unload the stacking model
-        gc.collect()  # Explicitly call garbage collector
 
         return df.to_dict(orient="records") 
     except Exception as e:
@@ -282,22 +185,6 @@ def predict_fake_reviews(reviews):
 
 
 # Perform sentiment analysis
-# def analyze_sentiment(reviews, ratings_distribution):
-#     analyzer = SentimentIntensityAnalyzer()
-#     sentiment_counts = {"positive": 0, "neutral": 0, "negative": 0}
-
-#     for review in reviews:
-#         sentiment = analyzer.polarity_scores(review["text"])["compound"]
-#         category = "positive" if sentiment >= 0.05 else "neutral" if sentiment > -0.05 else "negative"
-#         sentiment_counts[category] += 1
-
-#     total = sum(sentiment_counts.values())
-
-#     if total == 0:
-#         return {"positive": 0, "neutral": 0, "negative": 0}
-
-#     return {key: round((value / total) * 100, 2) for key, value in sentiment_counts.items()}
-
 def analyze_sentiment(reviews, ratings_distribution):
     analyzer = SentimentIntensityAnalyzer()
 
