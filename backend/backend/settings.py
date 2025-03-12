@@ -60,7 +60,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5000",  # Flask frontend
     "http://localhost:5000",
-    "https://fakereviewml-frontend.onrender.com",
+    # "https://fakereviewml-frontend.onrender.com",
 ]
 CORS_ALLOW_METHODS = [
     "GET",

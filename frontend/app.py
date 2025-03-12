@@ -6,8 +6,8 @@ from flask_cors import CORS  # Import CORS to allow frontend requests
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-# DJANGO_API_URL = "http://127.0.0.1:8000/api/predict/"
-DJANGO_API_URL = "https://fakereviewml-backend.onrender.com/api/predict/"
+DJANGO_API_URL = "http://127.0.0.1:8000/api/predict/"
+# DJANGO_API_URL = "https://fakereviewml-backend.onrender.com/api/predict/"
 
 # http://127.0.0.1:5000
 # https://fakereviewml-frontend.onrender.com
